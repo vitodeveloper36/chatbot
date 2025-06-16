@@ -1021,6 +1021,7 @@ class ChatBotHibrido {
             this.mostrarAyuda();
         } else {
             this.mostrarOpcionesActuales();
+        }
     }
 
     volverAlInicio() {
@@ -1200,14 +1201,14 @@ class ChatBotHibrido {
     // NUEVO: Método separado para configurar eventos SignalR
     configurarEventosSignalR() {
         const sock = this.agentSocket;
-        sock.off();  // limpia todos los handlers previos
+        sock.off(); // limpia todos los handlers previos
 
+        // Sesión asignada
         sock.on('SessionAssigned', data => {
             this.state.sessionId = data.sessionId;
             this.guardarSessionId();
             console.log('🔑 Session ID recibido:', data.sessionId);
 
-            // CORREGIDO: Mostrar mensaje más claro
             this.ui.appendMessage(`🔑 Sesión creada exitosamente`, 'system');
             this.ui.appendMessage(`📋 Session ID: ${data.sessionId}`, 'system');
             this.ui.appendMessage(`💡 ${data.message}`, 'system');
@@ -1215,16 +1216,13 @@ class ChatBotHibrido {
             this.mostrarBotonCopiarSessionId(data.sessionId);
         });
 
+        // Estado del agente
         sock.on('AgentStatusUpdate', data => {
             if (data.status === 'connected') {
                 this.ui.appendMessage(`✅ ${data.message}`, 'system');
-
-                // CORREGIDO: Mostrar información del agente
                 if (data.agent) {
                     this.ui.appendMessage(`👨‍💼 Agente: ${data.agent.name || 'Asistente'}`, 'system');
                 }
-
-                // Limpiar opciones cuando el agente se conecta
                 this.ui.clearOptions();
                 this.ui.appendMessage('💬 El agente está listo. Puedes empezar a escribir tus mensajes.', 'system');
             } else {
@@ -1232,115 +1230,91 @@ class ChatBotHibrido {
             }
         });
 
+        // Único handler para todos los ReceiveMessage
         sock.on('ReceiveMessage', payload => {
-            if (payload.type === 'agent_message') {
-                this.ui.appendMessage(`👨‍💼 ${payload.agent.name}: ${payload.message}`, 'bot');
+            console.log('📨 Mensaje recibido:', payload);
+            const { type, message, agent, timestamp, fileName, fileSize } = payload;
 
-                // CORREGIDO: Solo mostrar opciones si el agente indica finalización
-                if (/finalizar|desconectar|terminar|cerrar.*chat|fin.*conversaci[oó]n/i.test(payload.message)) {
-                    this.ui.appendMessage('🔚 El agente ha finalizado la conversación', 'system');
-                    setTimeout(() => {
-                        this.finalizarChatAgente();
-                    }, 2000);
-                }
-                // CORREGIDO: No mostrar opciones automáticamente para mensajes normales
-                // El usuario puede seguir escribiendo libremente
-            }
-            else if (payload.type === 'system_message') {
-                this.ui.appendMessage(`ℹ️ ${payload.message}`, 'system');
+            switch (type) {
+                case 'agent_message':
+                    // Mensaje del agente humano
+                    this.ui.appendMessage(`👨‍💼 ${agent.name}: ${message}`, 'bot');
+                    // Detectar fin de conversación
+                    if (/finalizar|desconectar|terminar|cerrar.*chat|fin.*conversaci[oó]n/i.test(message)) {
+                        this.ui.appendMessage('🔚 El agente ha finalizado la conversación', 'system');
+                        setTimeout(() => this.finalizarChatAgente(), 2000);
+                    }
+                    break;
 
-                // CORREGIDO: Solo mostrar opciones si es un mensaje de desconexión del sistema
-                if (/desconect|cerr.*sesi[oó]n|timeout/i.test(payload.message)) {
-                    setTimeout(() => {
-                        this.mostrarOpcionesAgente();
-                    }, 1000);
-                }
-            }
-            else if (payload.type === 'agent_disconnected') {
-                this.ui.appendMessage('🔌 El agente se ha desconectado', 'system');
-                setTimeout(() => {
-                    this.finalizarChatAgente();
-                }, 1500);
+                case 'system_message':
+                    // Mensaje de sistema
+                    this.ui.appendMessage(`ℹ️ ${message}`, 'system');
+                    // Si es desconexión automática, ofrecer opciones
+                    if (/desconect|cerr.*sesi[oó]n|timeout/i.test(message)) {
+                        setTimeout(() => this.mostrarOpcionesAgente(), 1000);
+                    }
+                    break;
+
+                case 'agent_disconnected':
+                    // El agente se desconectó
+                    this.ui.appendMessage('🔌 El agente se ha desconectado', 'system');
+                    setTimeout(() => this.finalizarChatAgente(), 1500);
+                    break;
+
+                case 'file_upload':
+                    // Confirmación de archivo enviado
+                    this.ui.appendMessage(
+                        `📎 Archivo enviado: ${fileName} (${fileSize})`,
+                        'user',
+                        { isFile: true, fileName, fileSize }
+                    );
+                    break;
+
+                case 'bot_message':
+                    // Mensaje de “bot” si lo hubiera
+                    this.ui.appendMessage(message.trim(), 'bot');
+                    break;
+
+                default:
+                    // Cualquier otro tipo lo tratamos como system
+                    this.ui.appendMessage(message, 'system');
             }
         });
 
-        this.agentSocket.on('AgentModeActivated', (data) => {
+        // Activación / desactivación del modo agente para subida de archivos
+        sock.on('AgentModeActivated', data => {
             console.log('🔓 Modo agente activado:', data);
             this.habilitarSubidaArchivos();
-
             if (data.message && data.showMessage !== false) {
                 this.ui.appendMessage('📎 Ahora puedes enviar archivos al agente', 'system');
             }
         });
-
-        this.agentSocket.on('AgentModeDeactivated', (data) => {
+        sock.on('AgentModeDeactivated', data => {
             console.log('🔒 Modo agente desactivado:', data);
             this.deshabilitarSubidaArchivos();
-
             if (data.message) {
                 this.ui.appendMessage(data.message, 'system');
             }
         });
 
-        // MODIFICAR: Evento ReceiveMessage para manejar archivos
-        this.agentSocket.on('ReceiveMessage', (data) => {
-            console.log('📨 Mensaje recibido:', data);
-
-            const { type, message, agent, timestamp, fileName, fileSize, fileType } = data;
-
-            switch (type) {
-                case 'system_message':
-                    this.ui.appendMessage(message, 'system');
-                    break;
-
-                case 'agent_message':
-                    this.ui.appendMessage(message, 'agent', {
-                        agent: agent?.name || 'Agente',
-                        avatar: agent?.avatar || '🧑‍💼'
-                    });
-                    break;
-
-                case 'bot_message':
-                    this.ui.appendMessage(message, 'bot');
-                    break;
-
-                case 'file_upload':
-                    // Confirmación de archivo enviado
-                    const fileMessage = `📎 Archivo enviado: ${fileName} (${fileSize})`;
-                    this.ui.appendMessage(fileMessage, 'user', {
-                        isFile: true,
-                        fileName: fileName,
-                        fileSize: fileSize
-                    });
-                    break;
-
-                default:
-                    this.ui.appendMessage(message, 'system');
-            }
-        });
-
-        // NUEVO: Evento específico para cuando el agente cierra la sesión
+        // Cuando el agente “cierra” la sesión desde el servidor
         sock.on('AgentDisconnected', () => {
             this.ui.appendMessage('🔌 El agente ha cerrado la sesión', 'system');
-            setTimeout(() => {
-                this.finalizarChatAgente();
-            }, 1500);
+            setTimeout(() => this.finalizarChatAgente(), 1500);
         });
 
-        // Eventos de conexión
+        // Reconexiones y cierres
         sock.onreconnected(() => {
             this.ui.appendMessage('✅ Reconectado con el servidor', 'system');
         });
-
         sock.onclose(() => {
             if (this.estado === ESTADOS.AGENTE) {
                 this.ui.appendMessage('⚠️ Se perdió la conexión con el servidor', 'system');
-                setTimeout(() => {
-                    this.finalizarChatAgente();
-                }, 2000);
+                setTimeout(() => this.finalizarChatAgente(), 2000);
             }
         });
     }
+
 
 
 
