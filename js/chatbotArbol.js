@@ -2199,3 +2199,5 @@ class FormValidator {
         };
     }
 }
+
+export { FormValidator };
