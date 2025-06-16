@@ -1021,7 +1021,7 @@ class ChatBotHibrido {
             this.mostrarAyuda();
         } else {
             this.mostrarOpcionesActuales();
-        } º
+        }
     }
 
     volverAlInicio() {
