@@ -57,8 +57,8 @@ class ChatBotHibrido {
 
         // AGREGAR: Propiedades de archivos
         this.fileUploadEnabled = false;
-        this.maxFileSize = 100 * 1024 * 1024; // 10MB
-        this.allowedTypes = ['.pdf', '.doc', '.docx'];
+        this.maxFileSize = 10 * 1024 * 1024; // 10MB
+        this.allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
         this.fileButton = null;
         this.fileInput = null;
 
@@ -139,7 +139,7 @@ class ChatBotHibrido {
         // Crear input de archivo (oculto)
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
-        this.fileInput.accept = '.pdf,.doc,.docx';
+        this.fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx';
         this.fileInput.style.display = 'none';
         document.body.appendChild(this.fileInput);
 
@@ -1171,7 +1171,7 @@ class ChatBotHibrido {
             this.fileButton.disabled = false;
             this.fileButton.style.opacity = '1';
             this.fileButton.style.background = 'linear-gradient(135deg, var(--municipal-green), #10b981)';
-            this.fileButton.title = 'Enviar archivo PDF, DOC o DOCX';
+            this.fileButton.title = 'Enviar archivo PDF, DOC, DOCX, XLS o XLSX';
 
             // Animación visual
             this.fileButton.classList.add('file-enabled');
@@ -1535,7 +1535,7 @@ class ChatBotHibrido {
 
             const extension = '.' + file.name.split('.').pop().toLowerCase();
             if (!this.allowedTypes.includes(extension)) {
-                this.ui.appendMessage('❌ Solo se permiten archivos PDF, DOC y DOCX', 'system');
+                this.ui.appendMessage('❌ Solo se permiten archivos PDF, DOC, DOCX, XLS o XLSX', 'system');
                 return;
             }
 

@@ -7,6 +7,8 @@ This project contains an experimental chat interface for the Municipalidad de Pu
 - `css/` – separated stylesheets (`main.css` and `chatbot.css`).
 - `js/` – JavaScript modules. Notable files are `chatbotArbol.js`, `uiManager.js`, `signalRManager.js` and `notificationManager.js`.
 
+When chatting with a live agent you can attach PDF, Word or Excel files (max 10MB).
+
 ## Development
 Install the dependencies and start a local web server with:
 
