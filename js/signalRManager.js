@@ -133,16 +133,28 @@ export class SignalRManager {
         if (!success) setTimeout(() => this.handleReconnection(), 5000);
     }
 
-    startHeartbeat() {
+        startHeartbeat() {
         this.stopHeartbeat();
-        this.heartbeatInterval = setInterval(async () => {
-            if (this.connection?.state === signalR.HubConnectionState.Connected) {
-            if (this.connection?.state === signalR.HubConnectionState.Connected) {
-                try { await this.connection.invoke('Heartbeat'); } catch {} }
-        }, 30000);
-    }
 
-    stopHeartbeat() { if (this.heartbeatInterval) clearInterval(this.heartbeatInterval); }
+        this.heartbeatInterval = setInterval(async () => {
+            // Solo intento heartbeat si la conexión está establecida
+            if (this.connection?.state === signalR.HubConnectionState.Connected) {
+            try {
+                await this.connection.invoke('Heartbeat');
+            } catch (err) {
+                console.error('Error enviando heartbeat:', err);
+            }
+            }
+        }, 30_000); // cada 30 segundos
+        }
+
+        stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+        }
+
 
     async disconnect() {
         this.stopHeartbeat();
