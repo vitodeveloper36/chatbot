@@ -1,5 +1,3 @@
-﻿// Archivo actualizado: se eliminaron todas las referencias a ENDPOINTS
-
 import { UIManager } from './uiManager.js';
 import { decisionTree, findNode, getChildren } from './decisionTree.js';
 import { SignalRManager } from './signalRManager.js';
