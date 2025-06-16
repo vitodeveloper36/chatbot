@@ -3,6 +3,7 @@
 import { UIManager } from './uiManager.js';
 import { decisionTree, findNode, getChildren } from './decisionTree.js';
 import { SignalRManager } from './signalRManager.js';
+import { NotificationManager } from './notificationManager.js';
 
 // ESTADOS DE CHATBOT
 const ESTADOS = {
@@ -68,6 +69,10 @@ class ChatBotHibrido {
             speechManager: new MockSpeechManager(),
             recorder: new MockRecordingManager(),
         };
+
+        this.notification = new NotificationManager();
+        this.services.notification = this.notification;
+        this.signalRManager = new SignalRManager(this);
 
         this.ui = null;
         this.intentosFallidos = 0;
@@ -1282,8 +1287,10 @@ class ChatBotHibrido {
 
             // AGREGAR: Habilitar subida de archivos una vez conectado
             this.habilitarSubidaArchivos();
+            this.notification.success('Conexión con el agente establecida');
 
         } catch (err) {
+            this.notification.error('Error al conectar con el agente');
             return this.manejarErrorConexion(err);
         }
     }
@@ -1507,6 +1514,7 @@ class ChatBotHibrido {
 
     finalizarChatAgente() {
         console.log('🔚 Finalizando chat con agente');
+        this.notification.info('Sesión con el agente finalizada');
 
         // IMPORTANTE: Reactivar mock TTS al finalizar
         this.services.speechManager.setAgentMode(false);
