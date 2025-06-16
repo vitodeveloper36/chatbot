@@ -155,8 +155,7 @@ export class SpeechManager {
       utterance.pitch = options.pitch || emotion.pitch;
       utterance.volume = options.volume || 0.8;
 
-      // ¡AQUÍ ESTÁ LA PARTE QUE FALTA!
-      // Eventos del utterance
+      // Configurar eventos del utterance para monitorear el proceso de voz
       utterance.onstart = () => {
         console.log('🗣️ Comenzando a hablar:', text.substring(0, 50) + '...');
         this.currentUtterance = utterance;

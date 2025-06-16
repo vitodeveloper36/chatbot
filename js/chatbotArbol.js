@@ -1021,7 +1021,6 @@ class ChatBotHibrido {
             this.mostrarAyuda();
         } else {
             this.mostrarOpcionesActuales();
-        } 
     }
 
     volverAlInicio() {
@@ -2088,3 +2087,5 @@ class FormValidator {
         };
     }
 }
+
+export { FormValidator };

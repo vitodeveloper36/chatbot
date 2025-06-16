@@ -8,4 +8,19 @@ This project contains an experimental chat interface for the Municipalidad de Pu
 - `js/` – JavaScript modules. Notable files are `chatbotArbol.js`, `uiManager.js`, `signalRManager.js` and `notificationManager.js`.
 
 ## Development
-There is no build system or package.json yet. Open `index.html` in a web server to test locally. The live agent features require a running SignalR backend.
+Install the dependencies and start a local web server with:
+
+```bash
+npm install
+npm start
+```
+
+The `start` script runs `http-server` to serve the project files.
+
+To run the placeholder test suite execute:
+
+```bash
+npm test
+```
+
+The live agent features still require a running SignalR backend.
