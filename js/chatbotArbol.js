@@ -809,25 +809,6 @@ class ChatBotHibrido {
             }, 500);
         }, 800);
     }
-
-
-
-    // CORREGIDO: Método único de procesamiento de mensajes
-    async procesarMensajeUsuario() {
-        const input = this.ui.inputEl.value.trim();
-        if (!input) return;
-        this.ui.appendMessage(input, 'user');
-        this.ui.inputEl.value = '';
-        if (this.estado !== ESTADOS.AGENTE) this.ui.clearOptions();
-        this.historialConversacion.push({ rol: 'usuario', mensaje: input, timestamp: new Date() });
-
-        switch (this.estado) {
-            case ESTADOS.ARBOL: await this.procesarEnArbol(input); break;
-            case ESTADOS.AGENTE: await this.procesarConAgente(input); break;
-            default: this.volverAlInicio();
-        }
-    }
-
     // ───────────────────────────────────────────────────────────────────────────
     // MANEJO DEL ÁRBOL DE DECISIONES
     // ───────────────────────────────────────────────────────────────────────────
@@ -2011,43 +1992,6 @@ class ChatBotHibrido {
         });
     }
 
-    // CORREGIDO: Mostrar SessionId guardado en navegación
-    mostrarBotonesNavegacion() {
-        const sessionIdGuardado = this.cargarSessionId();
-
-        const opcionesNavegacion = [
-            { id: 'menu', text: '🏠 Volver al Menú Principal' },
-            { id: 'ayuda', text: '🆘 Ayuda' },
-            { id: 'agente', text: '👨‍💼 Conectar con Agente' }
-        ];
-
-        // Si hay sessionId guardado, mostrar información
-        if (sessionIdGuardado) {
-            opcionesNavegacion.push({
-                id: 'mostrar-ultimo-sessionid',
-                text: `📋 Ver último Session ID usado`
-            });
-        }
-
-        setTimeout(() => {
-            this.ui.showOptions(opcionesNavegacion, (selectedId) => {
-                switch (selectedId) {
-                    case 'menu':
-                        this.volverAlInicio();
-                        break;
-                    case 'ayuda':
-                        this.mostrarAyuda();
-                        break;
-                    case 'agente':
-                        this.escalarAAgente();
-                        break;
-                    case 'mostrar-ultimo-sessionid':
-                        this.ui.appendMessage(`🔑 Último Session ID usado: ${sessionIdGuardado}`, 'system');
-                        break;
-                }
-            });
-        }, 500);
-    }
 
     desconectarAgente() {
         console.log('🔴 Desconectando del agente');
