@@ -57,8 +57,8 @@ class ChatBotHibrido {
 
         // AGREGAR: Propiedades de archivos
         this.fileUploadEnabled = false;
-        this.maxFileSize = 100 * 1024 * 1024; // 10MB
-        this.allowedTypes = ['.pdf', '.doc', '.docx'];
+        this.maxFileSize = 10 * 1024 * 1024; // 10MB
+        this.allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
         this.fileButton = null;
         this.fileInput = null;
 
@@ -139,7 +139,7 @@ class ChatBotHibrido {
         // Crear input de archivo (oculto)
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
-        this.fileInput.accept = '.pdf,.doc,.docx';
+        this.fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx';
         this.fileInput.style.display = 'none';
         document.body.appendChild(this.fileInput);
 
@@ -1071,115 +1071,6 @@ class ChatBotHibrido {
         }, 800);
     }
 
-    // AGREGAR: Método para configurar subida de archivos
-    setupFileUpload() {
-        // Crear input de archivo (oculto)
-        this.fileInput = document.createElement('input');
-        this.fileInput.type = 'file';
-        this.fileInput.accept = '.pdf,.doc,.docx';
-        this.fileInput.style.display = 'none';
-        document.body.appendChild(this.fileInput);
-
-        // Crear botón de archivo
-        this.fileButton = document.createElement('button');
-        this.fileButton.className = 'btn-icon';
-        this.fileButton.innerHTML = '📎';
-        this.fileButton.title = 'Enviar archivo (solo con agente)';
-        this.fileButton.disabled = true;
-        this.fileButton.style.opacity = '0.5';
-        this.fileButton.style.background = '#94a3b8';
-
-        // Agregar botón al contenedor de input
-        const inputContainer = this.ui.container.querySelector('.chat-input-container');
-        if (inputContainer) {
-            const sendButton = inputContainer.querySelector('#send-btn');
-            if (sendButton) {
-                inputContainer.insertBefore(this.fileButton, sendButton);
-            }
-        }
-
-        // Eventos
-        this.fileButton.addEventListener('click', () => {
-            if (this.fileUploadEnabled && this.estado === ESTADOS.AGENTE) {
-                this.fileInput.click();
-            } else {
-                this.ui.appendMessage('📎 El envío de archivos solo está disponible cuando hablas con un agente', 'system');
-            }
-        });
-
-        this.fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                this.uploadFile(file);
-            }
-        });
-    }
-
-    // AGREGAR: Método para subir archivo
-    async uploadFile(file) {
-        try {
-            // Validaciones
-            if (!this.fileUploadEnabled) {
-                this.ui.appendMessage('❌ Envío de archivos deshabilitado', 'system');
-                return;
-            }
-
-            if (this.estado !== ESTADOS.AGENTE) {
-                this.ui.appendMessage('❌ Solo puedes enviar archivos cuando hablas con un agente', 'system');
-                return;
-            }
-
-            if (file.size > this.maxFileSize) {
-                this.ui.appendMessage('❌ Archivo demasiado grande. Máximo 10MB', 'system');
-                return;
-            }
-
-            const extension = '.' + file.name.split('.').pop().toLowerCase();
-            if (!this.allowedTypes.includes(extension)) {
-                this.ui.appendMessage('❌ Solo se permiten archivos PDF, DOC y DOCX', 'system');
-                return;
-            }
-
-            // Mostrar progreso
-            this.ui.appendMessage(`📎 Enviando ${file.name}...`, 'user');
-
-            // Convertir a base64
-            const fileData = await this.fileToBase64(file);
-
-            // Enviar via SignalR
-            if (this.services.signalR && this.services.signalR.connection) {
-                await this.services.signalR.connection.invoke('UploadFile',
-                    this.state.sessionId,
-                    file.name,
-                    fileData,
-                    extension
-                );
-            } else {
-                throw new Error('No hay conexión SignalR disponible');
-            }
-
-            // Limpiar input
-            this.fileInput.value = '';
-
-        } catch (error) {
-            console.error('Error subiendo archivo:', error);
-            this.ui.appendMessage('❌ Error al enviar archivo: ' + error.message, 'system');
-        }
-    }
-
-    // AGREGAR: Helper para convertir archivo a base64
-    fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                // Remover el prefijo data:...;base64,
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
 
     // MODIFICADO: Método para reiniciar con opciones
     reiniciarChatbot(mantenerDatos = true) {
@@ -1301,7 +1192,7 @@ class ChatBotHibrido {
             this.fileButton.disabled = false;
             this.fileButton.style.opacity = '1';
             this.fileButton.style.background = 'linear-gradient(135deg, var(--municipal-green), #10b981)';
-            this.fileButton.title = 'Enviar archivo PDF, DOC o DOCX';
+            this.fileButton.title = 'Enviar archivo PDF, DOC, DOCX, XLS o XLSX';
 
             // Animación visual
             this.fileButton.classList.add('file-enabled');
@@ -1692,7 +1583,7 @@ class ChatBotHibrido {
 
             const extension = '.' + file.name.split('.').pop().toLowerCase();
             if (!this.allowedTypes.includes(extension)) {
-                this.ui.appendMessage('❌ Solo se permiten archivos PDF, DOC y DOCX', 'system');
+                this.ui.appendMessage('❌ Solo se permiten archivos PDF, DOC, DOCX, XLS o XLSX', 'system');
                 return;
             }
 
